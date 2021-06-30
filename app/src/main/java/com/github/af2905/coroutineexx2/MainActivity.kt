@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 
@@ -25,10 +27,12 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.bthRun2).setOnClickListener { onRun2() }
         findViewById<View>(R.id.bthRun3).setOnClickListener { onRun3() }
 
-        launchScope3coroutine()
+        launchScope2Coroutine()
+        launchScope3Coroutine()
+        launchRepeatedCoroutine()
     }
 
-    private fun launchScope2coroutine() {
+    private fun launchScope2Coroutine() {
         val scope2 = CoroutineScope(Dispatchers.Main)
 
         log("scope2, ${contextToString(scope2.coroutineContext)}")
@@ -38,7 +42,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun launchScope3coroutine() {
+    private fun launchScope3Coroutine() {
         val scope3 = CoroutineScope(Job() + Dispatchers.Main + UserData())
         log("scope3, ${contextToString(scope.coroutineContext)}")
 
@@ -52,6 +56,18 @@ class MainActivity : AppCompatActivity() {
                     log("scope3 coroutine, level3, ${contextToString(coroutineContext)}")
                     log("scope3 coroutine, level3, userData, ${coroutineContext[UserData]}")
                 }
+            }
+        }
+    }
+
+    private fun launchRepeatedCoroutine() {
+        val scope4 = CoroutineScope(Executors.newSingleThreadExecutor().asCoroutineDispatcher())
+
+        repeat(6) {
+            scope4.launch {
+                log("scope4 coroutine $it, start")
+                TimeUnit.MILLISECONDS.sleep(100)
+                log("scope4 coroutine $it, end")
             }
         }
     }
