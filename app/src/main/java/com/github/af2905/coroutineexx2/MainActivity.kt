@@ -1,18 +1,19 @@
 package com.github.af2905.coroutineexx2
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.TimeUnit
+import kotlin.coroutines.ContinuationInterceptor
+import kotlin.coroutines.CoroutineContext
 
 class MainActivity : AppCompatActivity() {
 
     private var formatter = SimpleDateFormat("HH:mm:ss.SSS", Locale.getDefault())
-    private val scope = CoroutineScope(Job())
+    private val scope = CoroutineScope(Job() + Dispatchers.Default)
 
     private lateinit var job: Job
 
@@ -24,6 +25,35 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.bthRun2).setOnClickListener { onRun2() }
         findViewById<View>(R.id.bthRun3).setOnClickListener { onRun3() }
 
+        launchScope3coroutine()
+    }
+
+    private fun launchScope2coroutine() {
+        val scope2 = CoroutineScope(Dispatchers.Main)
+
+        log("scope2, ${contextToString(scope2.coroutineContext)}")
+
+        scope2.launch {
+            log("scope2 coroutine, ${contextToString(coroutineContext)}")
+        }
+    }
+
+    private fun launchScope3coroutine() {
+        val scope3 = CoroutineScope(Job() + Dispatchers.Main + UserData())
+        log("scope3, ${contextToString(scope.coroutineContext)}")
+
+        scope3.launch {
+            log("scope3 coroutine, level1, ${contextToString(coroutineContext)}")
+
+            launch(Dispatchers.Default) {
+                log("scope3 coroutine, level2, ${contextToString(coroutineContext)}")
+
+                launch {
+                    log("scope3 coroutine, level3, ${contextToString(coroutineContext)}")
+                    log("scope3 coroutine, level3, userData, ${coroutineContext[UserData]}")
+                }
+            }
+        }
     }
 
     private fun onRun() {
@@ -96,6 +126,9 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         scope.cancel()
     }
+
+    private fun contextToString(context: CoroutineContext): String =
+        "Job = ${context[Job]}, Dispatcher = ${context[ContinuationInterceptor]}"
 
     private fun log(text: String) {
         Log.d("TAG", "${formatter.format(Date())} $text [${Thread.currentThread().name}]")
